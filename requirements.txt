@@ -1,8 +1,8 @@
 Flask==3.0.0
 keras==2.11.0
-tensorflow==2.15.0  # Add TensorFlow to support Keras
 nltk==3.8.1
-numpy==1.22.2
+numpy>=1.23.5  # Updated to meet TensorFlow requirements
+tensorflow==2.15.0  
 spacy==3.7.2
 spacy-langdetect==0.1.2
 spacy-legacy==3.0.12
