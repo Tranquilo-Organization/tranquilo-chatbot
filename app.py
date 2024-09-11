@@ -13,7 +13,7 @@ app = Flask(__name__)
 app.static_folder = "static"
 
 # Setup logging
-logging.basicConfig(level=logging.INFO)  # Set to INFO to avoid too much verbosity
+logging.basicConfig(level=logging.DEBUG)  # Set to DEBUG for detailed logs
 logger = logging.getLogger(__name__)
 
 # Initialize resources
@@ -52,6 +52,7 @@ def clean_up_sentence(sentence):
     try:
         sentence_words = nltk.word_tokenize(sentence)
         sentence_words = [lemmatizer.lemmatize(word.lower()) for word in sentence_words]
+        logger.debug("Cleaned sentence: %s", sentence_words)
         return sentence_words
     except Exception as e:
         logger.error("Error cleaning sentence: %s", str(e))
@@ -69,6 +70,7 @@ def bow(sentence, words, show_details=True):
                     bag[i] = 1
                     if show_details:
                         logger.debug("Found in bag: %s", w)
+        logger.debug("Bag of words: %s", bag)
         return np.array(bag)
     except Exception as e:
         logger.error("Error creating bag of words: %s", str(e))
@@ -83,6 +85,7 @@ def predict_class(sentence, model):
         ERROR_THRESHOLD = 0.25
         results = [[i, r] for i, r in enumerate(res) if r > ERROR_THRESHOLD]
         results.sort(key=lambda x: x[1], reverse=True)
+        logger.info("Prediction results: %s", results)
         return [{"intent": classes[r[0]], "probability": str(r[1])} for r in results]
     except Exception as e:
         logger.error("Error predicting class: %s", str(e))
@@ -96,7 +99,10 @@ def get_response(ints, intents_json):
             tag = ints[0]["intent"]
             for intent in intents_json["intents"]:
                 if intent["tag"] == tag:
-                    return random.choice(intent["responses"])
+                    response = random.choice(intent["responses"])
+                    logger.info("Generated response: %s", response)
+                    return response
+        logger.warning("No matching intent found.")
         return "Sorry, I didn't understand that."
     except Exception as e:
         logger.error("Error generating response: %s", str(e))
@@ -107,7 +113,9 @@ def chatbot_response(msg):
     """Generate a response from the chatbot."""
     try:
         ints = predict_class(msg, model)
-        return get_response(ints, intents)
+        response = get_response(ints, intents)
+        logger.info("Chatbot response: %s", response)
+        return response
     except Exception as e:
         logger.error("Error generating chatbot response: %s", str(e))
         return "An error occurred while processing your request."
@@ -118,6 +126,7 @@ def chatbot_response(msg):
 def home():
     """Serve the homepage."""
     try:
+        logger.info("Rendering home page.")
         return render_template("index.html")
     except Exception as e:
         logger.error("Error rendering home page: %s", str(e))
@@ -153,7 +162,8 @@ def get_bot_response_post():
 # Application entry point
 if __name__ == "__main__":
     try:
-        app.run(host="0.0.0.0", port=5000, debug=False)
+        logger.info("Starting Flask application.")
+        app.run(host="0.0.0.0", port=5000, debug=True)  # Enable Flask debugging mode
     except Exception as e:
-        logger.error("Failed to start Flask application: %s", str(e))
+        logger.critical("Failed to start Flask application: %s", str(e))
         raise
