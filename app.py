@@ -25,7 +25,7 @@ try:
     logger.info("Model loaded successfully.")
 except Exception as e:
     logger.error("Error loading the model: %s", str(e))
-    raise
+    raise RuntimeError(f"Failed to load model: {str(e)}")
 
 try:
     with open("intents.json") as f:
@@ -33,7 +33,7 @@ try:
     logger.info("Intents file loaded successfully.")
 except Exception as e:
     logger.error("Error loading intents.json: %s", str(e))
-    raise
+    raise RuntimeError(f"Failed to load intents file: {str(e)}")
 
 try:
     with open("texts.pkl", "rb") as f:
@@ -43,48 +43,64 @@ try:
     logger.info("Model support files (texts.pkl, labels.pkl) loaded successfully.")
 except Exception as e:
     logger.error("Error loading model support files: %s", str(e))
-    raise
+    raise RuntimeError(f"Failed to load support files: {str(e)}")
 
 
 # Helper functions
 def clean_up_sentence(sentence):
     """Tokenize and lemmatize the user input."""
-    sentence_words = nltk.word_tokenize(sentence)
-    sentence_words = [lemmatizer.lemmatize(word.lower()) for word in sentence_words]
-    return sentence_words
+    try:
+        sentence_words = nltk.word_tokenize(sentence)
+        sentence_words = [lemmatizer.lemmatize(word.lower()) for word in sentence_words]
+        return sentence_words
+    except Exception as e:
+        logger.error("Error cleaning sentence: %s", str(e))
+        raise
 
 
 def bow(sentence, words, show_details=True):
     """Create a bag of words from the input sentence."""
-    sentence_words = clean_up_sentence(sentence)
-    bag = [0] * len(words)
-    for s in sentence_words:
-        for i, w in enumerate(words):
-            if w == s:
-                bag[i] = 1
-                if show_details:
-                    logger.debug("Found in bag: %s", w)
-    return np.array(bag)
+    try:
+        sentence_words = clean_up_sentence(sentence)
+        bag = [0] * len(words)
+        for s in sentence_words:
+            for i, w in enumerate(words):
+                if w == s:
+                    bag[i] = 1
+                    if show_details:
+                        logger.debug("Found in bag: %s", w)
+        return np.array(bag)
+    except Exception as e:
+        logger.error("Error creating bag of words: %s", str(e))
+        raise
 
 
 def predict_class(sentence, model):
     """Predict the intent of the input sentence."""
-    p = bow(sentence, words, show_details=False)
-    res = model.predict(np.array([p]))[0]
-    ERROR_THRESHOLD = 0.25
-    results = [[i, r] for i, r in enumerate(res) if r > ERROR_THRESHOLD]
-    results.sort(key=lambda x: x[1], reverse=True)
-    return [{"intent": classes[r[0]], "probability": str(r[1])} for r in results]
+    try:
+        p = bow(sentence, words, show_details=False)
+        res = model.predict(np.array([p]))[0]
+        ERROR_THRESHOLD = 0.25
+        results = [[i, r] for i, r in enumerate(res) if r > ERROR_THRESHOLD]
+        results.sort(key=lambda x: x[1], reverse=True)
+        return [{"intent": classes[r[0]], "probability": str(r[1])} for r in results]
+    except Exception as e:
+        logger.error("Error predicting class: %s", str(e))
+        raise
 
 
 def get_response(ints, intents_json):
     """Generate a response based on the predicted intent."""
-    if ints:
-        tag = ints[0]["intent"]
-        for intent in intents_json["intents"]:
-            if intent["tag"] == tag:
-                return random.choice(intent["responses"])
-    return "Sorry, I didn't understand that."
+    try:
+        if ints:
+            tag = ints[0]["intent"]
+            for intent in intents_json["intents"]:
+                if intent["tag"] == tag:
+                    return random.choice(intent["responses"])
+        return "Sorry, I didn't understand that."
+    except Exception as e:
+        logger.error("Error generating response: %s", str(e))
+        raise
 
 
 def chatbot_response(msg):
@@ -101,7 +117,11 @@ def chatbot_response(msg):
 @app.route("/")
 def home():
     """Serve the homepage."""
-    return render_template("index.html")
+    try:
+        return render_template("index.html")
+    except Exception as e:
+        logger.error("Error rendering home page: %s", str(e))
+        return "An error occurred while rendering the homepage.", 500
 
 
 @app.route("/chatbot", methods=["POST"])
@@ -110,6 +130,7 @@ def get_bot_response_post():
     try:
         data = request.get_json()
         if not data or "msg" not in data:
+            logger.warning("Invalid input: %s", data)
             return (
                 jsonify({"response": "Invalid input. Please provide a 'msg' field."}),
                 400,
@@ -135,3 +156,4 @@ if __name__ == "__main__":
         app.run(host="0.0.0.0", port=5000, debug=False)
     except Exception as e:
         logger.error("Failed to start Flask application: %s", str(e))
+        raise
