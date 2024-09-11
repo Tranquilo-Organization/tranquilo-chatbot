@@ -104,7 +104,7 @@ def home():
     return render_template("index.html")
 
 
-@app.route("/get", methods=["POST"])
+@app.route("/chatbot", methods=["POST"])
 def get_bot_response_post():
     """Handle chatbot responses via POST with raw JSON."""
     try:
