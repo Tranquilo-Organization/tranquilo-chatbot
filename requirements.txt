@@ -1,6 +1,5 @@
 Flask==3.0.0
-waitress==2.1.2  # Add Waitress to serve your app
-keras>=2.15.0,<2.16.0  # Or remove this line if not needed
+waitress==2.1.2  # Waitress to serve the Flask app in production
 nltk==3.8.1
 numpy>=1.23.5
 tensorflow==2.15.0
