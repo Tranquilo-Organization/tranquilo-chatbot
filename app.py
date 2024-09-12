@@ -7,6 +7,7 @@ import numpy as np
 from keras.models import load_model
 import pickle
 import logging
+import os
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -165,7 +166,8 @@ def get_bot_response_post():
 if __name__ == "__main__":
     try:
         logger.info("Starting Flask application.")
-        app.run(host="0.0.0.0", port=5000, debug=True)  # Enable Flask debugging mode
+        # Use environment variable for port and disable debug mode for production
+        app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)
     except Exception as e:
         logger.critical("Failed to start Flask application: %s", str(e))
         raise
