@@ -4,12 +4,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home Page</title>
+    <title>Chatbot</title>
 </head>
 
 <body>
-    <h1>Welcome to the Chatbot Application</h1>
-    <p>This is the homepage of your Flask chatbot application.</p>
+    <h1>Chat with the Bot</h1>
+    <form id="chat-form">
+        <input type="text" id="user-message" name="msg" placeholder="Type your message here..." required>
+        <button type="submit">Send</button>
+    </form>
+    <div id="response"></div>
+
+    <script>
+        document.getElementById('chat-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const message = document.getElementById('user-message').value;
+
+            fetch('https://tranquilo-chatbot-eudbbjdufebpasb7.uaenorth-01.azurewebsites.net/chatbot', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ msg: message }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('response').innerText = data.response;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        });
+    </script>
 </body>
 
 </html>
