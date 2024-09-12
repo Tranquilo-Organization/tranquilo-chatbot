@@ -9,27 +9,33 @@
 
 <body>
     <h1>Chat with the Bot</h1>
+
+    <!-- Chat form for submitting the message -->
     <form id="chat-form">
         <input type="text" id="user-message" name="msg" placeholder="Type your message here..." required>
         <button type="submit">Send</button>
     </form>
+
+    <!-- Container to display the bot's response -->
     <div id="response"></div>
 
     <script>
         document.getElementById('chat-form').addEventListener('submit', function (event) {
-            event.preventDefault();
+            event.preventDefault();  // Prevent form from submitting normally
 
-            const message = document.getElementById('user-message').value;
+            const message = document.getElementById('user-message').value;  // Get the user input message
 
-            fetch('https://tranquilo-chatbot-eudbbjdufebpasb7.uaenorth-01.azurewebsites.net/chatbot', {
+            // Send a POST request to the chatbot endpoint with the user's message
+            fetch('/chatbot', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ msg: message }),
+                body: JSON.stringify({ msg: message }),  // Send the message in JSON format
             })
-                .then(response => response.json())
+                .then(response => response.json())  // Parse the response as JSON
                 .then(data => {
+                    // Display the chatbot's response in the response div
                     document.getElementById('response').innerText = data.response;
                 })
                 .catch(error => {

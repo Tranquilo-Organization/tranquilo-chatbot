@@ -135,19 +135,21 @@ def home():
 
 @app.route("/chatbot", methods=["POST"])
 def get_bot_response_post():
-    """Handle chatbot responses via POST with raw JSON."""
+    """Handle chatbot responses via POST with both form and JSON support."""
     try:
-        data = request.get_json()
-        if not data or "msg" not in data:
-            logger.warning("Invalid input: %s", data)
+        if request.is_json:  # If the request contains JSON data
+            data = request.get_json()
+            user_text = data.get("msg", "")
+        else:  # If it's from an HTML form (application/x-www-form-urlencoded)
+            user_text = request.form.get("msg", "")
+
+        if not user_text:
             return (
                 jsonify({"response": "Invalid input. Please provide a 'msg' field."}),
                 400,
             )
 
-        user_text = data["msg"]
-        logger.debug("User input (POST, JSON): %s", user_text)
-
+        logger.debug("User input (POST): %s", user_text)
         chatbot_response_text = chatbot_response(user_text)
         return jsonify({"response": chatbot_response_text})
 
